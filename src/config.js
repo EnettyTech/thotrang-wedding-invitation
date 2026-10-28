@@ -117,5 +117,5 @@ export const config = {
   ],
 
   // Nhạc nền (tuỳ chọn). Nếu file không tồn tại, nút nhạc sẽ tự ẩn.
-  music: '/music/song.mp3',
+  music: '/music/song.m4a',
 };

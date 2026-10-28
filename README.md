@@ -20,7 +20,7 @@ Mọi nội dung nằm trong `src/config.js`: tên, cha mẹ, ngày cưới, câ
 | Ảnh cưới chính (sau đôi nhẫn) | `public/photos/` | Như trên |
 | Album | `public/photos/` | Dọc hay ngang đều được, rộng khoảng 1200 px |
 | QR mừng cưới | `public/qr/` | Ảnh QR tải từ app ngân hàng |
-| Nhạc nền | `public/music/song.mp3` | Không có file thì nút nhạc tự ẩn |
+| Nhạc nền | `public/music/song.m4a` (hoặc .mp3) | Không có file thì nút nhạc tự ẩn |
 
 Sau khi đổi tên file, cập nhật đường dẫn tương ứng trong `src/config.js`.
 
