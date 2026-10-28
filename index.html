@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Thiệp cưới</title>
+    <meta name="description" content="Trân trọng kính mời bạn đến chung vui trong ngày cưới của chúng tôi." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Thiệp cưới" />
+    <meta property="og:description" content="Trân trọng kính mời bạn đến chung vui trong ngày cưới của chúng tôi." />
+    <meta property="og:image" content="/photos/cover.svg" />
+    <meta name="theme-color" content="#f7efe9" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&family=Great+Vibes&display=swap"
+      rel="stylesheet"
+    />
+    <!-- CSS nạp ngay trong <head> (không qua JS) để trang không bị chớp khi tải -->
+    <link rel="stylesheet" href="/src/style.css" />
+    <style>
+      html, body { background: #f7efe9; }
+    </style>
+  </head>
+  <body class="locked">
+    <!-- Màn tải -->
+    <div id="loader" aria-live="polite">
+      <svg class="loader-heart" viewBox="0 0 64 56" width="56" height="49" fill="none" stroke="#c46a7d" stroke-width="2" aria-hidden="true">
+        <path d="M32 52S4 35 4 17A13 13 0 0 1 32 11a13 13 0 0 1 28 6c0 18-28 35-28 35Z" />
+      </svg>
+      <p class="loader-text">Đang gửi yêu thương <span id="loader-pct">0%</span></p>
+    </div>
+
+    <!-- Bìa thiệp -->
+    <div id="intro" hidden>
+      <div class="intro-card">
+        <p class="eyebrow">Thiệp mời cưới</p>
+        <p class="script intro-names"><span data-bind="groom.name"></span> <em>&amp;</em> <span data-bind="bride.name"></span></p>
+        <p class="intro-guest">Gửi <strong id="intro-guest"></strong></p>
+        <button id="open-btn" class="seal" aria-label="Mở thiệp"></button>
+        <p class="hint">Chạm vào con dấu để mở thiệp</p>
+      </div>
+    </div>
+
+    <canvas id="scene" aria-hidden="true"></canvas>
+
+    <header class="topbar">
+      <span class="monogram script" id="monogram"></span>
+      <button id="sound-btn" class="sound" aria-pressed="false" hidden>
+        <span class="bars" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="sound-label">Nhạc</span>
+      </button>
+    </header>
+
+    <main>
+      <!-- Hành trình 3D -->
+      <div id="journey">
+        <section class="hero" data-stage>
+          <div class="hero-text">
+            <p class="eyebrow reveal">Trân trọng kính mời</p>
+            <p class="hero-guest reveal" id="hero-guest"></p>
+            <p class="eyebrow reveal">đến dự lễ thành hôn của</p>
+            <h1 class="script hero-names reveal">
+              <span data-bind="groom.name"></span>
+              <em>&amp;</em>
+              <span data-bind="bride.name"></span>
+            </h1>
+            <p class="hero-date reveal" data-bind="dateText"></p>
+          </div>
+          <p class="scroll-hint">Cuộn để xem câu chuyện của chúng mình</p>
+        </section>
+
+        <div id="chapters"></div>
+
+        <section class="union" data-stage>
+          <div class="sticky">
+            <div class="union-text reveal">
+              <p class="eyebrow">Và rồi, chúng mình về chung một nhà</p>
+              <p class="script union-names">
+                <span data-bind="groom.name"></span> <em>&amp;</em> <span data-bind="bride.name"></span>
+              </p>
+              <p class="hero-date" data-bind="dateText"></p>
+            </div>
+            <img class="fallback-photo union-photo" id="union-photo" alt="Ảnh cưới" />
+          </div>
+        </section>
+      </div>
+
+      <!-- Thông tin -->
+      <section class="panel" id="info">
+        <h2 class="section-title reveal">Thông tin hôn lễ</h2>
+        <div class="families reveal">
+          <div>
+            <p class="eyebrow">Nhà trai</p>
+            <p class="parents" id="groom-parents"></p>
+            <p class="person"><span class="role">Chú rể</span><span class="script" data-bind="groom.fullName"></span></p>
+          </div>
+          <div class="divider" aria-hidden="true">&amp;</div>
+          <div>
+            <p class="eyebrow">Nhà gái</p>
+            <p class="parents" id="bride-parents"></p>
+            <p class="person"><span class="role">Cô dâu</span><span class="script" data-bind="bride.fullName"></span></p>
+          </div>
+        </div>
+
+        <div class="countdown reveal" id="countdown">
+          <div class="flip" data-cd="d" data-label="Ngày"></div>
+          <div class="flip" data-cd="h" data-label="Giờ"></div>
+          <div class="flip" data-cd="m" data-label="Phút"></div>
+          <div class="flip" data-cd="s" data-label="Giây"></div>
+        </div>
+        <p class="lunar" data-bind="lunarText"></p>
+
+        <div class="events" id="events"></div>
+        <div class="map-wrap reveal" id="map-wrap"></div>
+      </section>
+
+      <!-- Album -->
+      <section class="panel alt" id="album">
+        <h2 class="section-title reveal">Album ảnh cưới</h2>
+        <div class="gallery" id="gallery"></div>
+      </section>
+
+      <!-- Mừng cưới -->
+      <section class="panel" id="gifts">
+        <h2 class="section-title reveal">Hộp mừng cưới</h2>
+        <p class="lead reveal">Sự hiện diện của bạn là món quà quý giá nhất. Nếu ở xa không thể đến chung vui, bạn có thể gửi lời chúc qua đây.</p>
+        <div class="gift-list" id="gift-list"></div>
+      </section>
+
+      <footer class="footer">
+        <p class="script footer-thanks">Cảm ơn bạn</p>
+        <p>đã là một phần trong câu chuyện của chúng mình</p>
+        <p class="script footer-names">
+          <span data-bind="groom.name"></span> &amp; <span data-bind="bride.name"></span>
+        </p>
+      </footer>
+    </main>
+
+    <!-- Xem ảnh lớn -->
+    <div id="lightbox" hidden role="dialog" aria-modal="true" aria-label="Xem ảnh">
+      <button class="lb-close" aria-label="Đóng">×</button>
+      <button class="lb-prev" aria-label="Ảnh trước">‹</button>
+      <img alt="" />
+      <button class="lb-next" aria-label="Ảnh sau">›</button>
+    </div>
+
+    <div id="toast" role="status"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

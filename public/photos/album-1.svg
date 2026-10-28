@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1000" viewBox="0 0 800 1000">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f3d5d8"/><stop offset="1" stop-color="#c98a96"/></linearGradient></defs>
+<rect width="800" height="1000" fill="url(#g)"/>
+<g fill="#ffffff" fill-opacity=".55">
+<circle cx="330.0" cy="420.0" r="52"/><path d="M230.0 1000 C230.0 620.0 430.0 620.0 430.0 1000Z"/>
+<circle cx="470.0" cy="450.0" r="48"/><path d="M380.0 1000 C380.0 640.0 570.0 640.0 570.0 1000Z"/>
+</g>
+<text x="400.0" y="160.0" text-anchor="middle" font-family="Georgia,serif" font-size="48.0" fill="#ffffff">Album 1</text>
+</svg>
