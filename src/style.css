@@ -97,8 +97,39 @@ button { font: inherit; color: inherit; cursor: pointer; background: none; borde
 .intro-names span, .hero-names span, .union-names span, .footer-names span { display: inline-block; white-space: nowrap; }
 .intro-names, .hero-names, .union-names, .footer-names { text-wrap: balance; }
 .intro-names em, .hero-names em, .union-names em { font-style: normal; color: var(--rose); font-size: 0.7em; }
-.intro-guest { font-family: var(--serif); font-size: 1.15rem; }
-.intro-guest strong { font-weight: 500; color: var(--rose); }
+.intro-guest { display: grid; justify-items: center; gap: 0.1rem; }
+
+/* Tên khách mời: chữ viết tay lớn, màu hồng ánh vàng, hai bên có đường kẻ trang trí */
+.guest {
+  display: inline-flex;
+  align-items: center;
+  gap: clamp(0.5rem, 2vw, 0.9rem);
+  max-width: 100%;
+}
+.guest::before, .guest::after {
+  content: '';
+  flex: none;
+  width: clamp(22px, 7vw, 56px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+.guest::after { background: linear-gradient(90deg, var(--gold), transparent); }
+.guest-name {
+  font-family: var(--script);
+  font-weight: 400;
+  font-size: clamp(2.3rem, 8vw, 3.3rem);
+  line-height: 1.25;
+  padding: 0 0.12em 0.08em;
+  text-wrap: balance;
+  background: linear-gradient(100deg, #b23f58 0%, #e17f98 30%, #c9a15f 50%, #e17f98 70%, #b23f58 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 6px rgba(196, 80, 106, 0.18));
+  animation: guest-shimmer 7s linear infinite;
+}
+@keyframes guest-shimmer { to { background-position: -220% center; } }
 .hint { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; }
 
 /* Con dấu sáp tròn */
@@ -195,7 +226,8 @@ main { position: relative; z-index: 1; }
 }
 .hero-text { display: grid; gap: 0.6rem; justify-items: center; }
 .webgl .hero-text { margin-top: 46vh; }
-.hero-guest { font-family: var(--serif); font-size: clamp(1.4rem, 4vw, 1.9rem); color: var(--rose); font-style: italic; }
+.hero-guest { margin: 0.2rem 0 0.1rem; }
+.hero-guest .guest-name { font-size: clamp(2.8rem, 9vw, 4.4rem); }
 .hero-names { font-size: clamp(2.8rem, 8vw, 5.2rem); line-height: 1.05; margin: 0.4rem 0; }
 .hero-date { font-family: var(--serif); font-size: 1.15rem; letter-spacing: 0.25em; }
 .scroll-hint {
@@ -415,22 +447,159 @@ main { position: relative; z-index: 1; }
 .gallery-item img { width: 100%; transition: transform 0.8s ease; }
 .gallery-item:hover img { transform: scale(1.04); }
 
-.gift-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.5rem; }
-.gift {
-  width: min(320px, 100%);
-  padding: 2rem 1.5rem;
-  background: var(--surface);
+.wish-count { margin: 1.6rem 0 1rem; font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); }
+.wish-list {
+  max-width: 1040px;
+  max-height: min(70vh, 640px);
+  margin: 0 auto;
+  padding: 0.8rem 0.8rem 2.5rem;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 330px));
+  justify-content: center;
+  align-items: start;
+  gap: 1.8rem 1.4rem;
+  text-align: left;
+  -webkit-mask-image: linear-gradient(#000 85%, transparent);
+  mask-image: linear-gradient(#000 85%, transparent);
+}
+/* Card lời chúc: như một lá thư tình nhỏ có trái tim gắn trên đầu */
+.wish {
+  --tilt: -1deg;
+  position: relative;
+  margin-top: 18px;
+  padding: 2.2rem 1.6rem 1.3rem;
+  background:
+    radial-gradient(circle at 100% 100%, rgba(240, 160, 178, 0.22), transparent 55%),
+    linear-gradient(165deg, #fffafa 0%, #fdf0f2 100%);
+  border-radius: 24px;
+  box-shadow: 0 22px 44px -26px rgba(170, 70, 95, 0.45), 0 3px 10px -6px rgba(170, 70, 95, 0.2);
+  transform: rotate(var(--tilt));
+  transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.3, 1.2), box-shadow 0.4s;
+  overflow: visible;
+}
+.wish:nth-child(3n + 2) { --tilt: 1.2deg; }
+.wish:nth-child(3n) { --tilt: -0.5deg; }
+.wish:hover { transform: rotate(0) translateY(-4px); box-shadow: 0 28px 50px -24px rgba(170, 70, 95, 0.5); }
+/* Viền chỉ khâu như giấy viết thư */
+.wish::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1.5px dashed rgba(196, 80, 106, 0.22);
+  border-radius: 18px;
+  pointer-events: none;
+}
+/* Trái tim mờ in chìm ở góc */
+.wish::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  width: 64px;
+  height: 58px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 29'%3E%3Cpath d='M16 28S1 19.2 1 9.3A7.8 7.8 0 0 1 16 5.6a7.8 7.8 0 0 1 15 3.7C31 19.2 16 28 16 28Z' fill='%23d9607f'/%3E%3C/svg%3E") no-repeat center / contain;
+  opacity: 0.07;
+  transform: rotate(-12deg);
+  pointer-events: none;
+}
+.wish-heart {
+  position: absolute;
+  top: -17px;
+  left: 50%;
+  width: 38px;
+  height: 35px;
+  margin-left: -19px;
+  filter: drop-shadow(0 6px 8px rgba(196, 80, 106, 0.35));
+}
+.wish-heart svg { display: block; width: 100%; height: 100%; }
+.wish.new { animation: wish-in 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.wish.new .wish-heart { animation: heartbeat 1.2s ease 0.5s 2; }
+@keyframes wish-in { from { opacity: 0; transform: translateY(-14px) scale(0.92) rotate(var(--tilt)); } }
+@keyframes heartbeat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(0.95); } 45% { transform: scale(1.15); } }
+.wish-message {
+  position: relative;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.12rem;
+  line-height: 1.55;
+  color: #5b3a43;
+  text-align: center;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.wish-message::before, .wish-message::after {
+  font-family: var(--script);
+  font-style: normal;
+  font-size: 2.2rem;
+  line-height: 0;
+  color: rgba(196, 80, 106, 0.45);
+  vertical-align: -0.35em;
+}
+.wish-message::before { content: '\201C'; margin-right: 0.15em; }
+.wish-message::after { content: '\201D'; margin-left: 0.1em; }
+.wish footer { position: relative; margin-top: 1rem; text-align: center; }
+.wish-name { font-family: var(--script); font-weight: 400; font-size: 1.75rem; line-height: 1.2; color: var(--rose); overflow-wrap: anywhere; }
+.wish-name::before { content: '— '; font-family: var(--serif); font-size: 1rem; vertical-align: 0.3em; color: rgba(196, 80, 106, 0.6); }
+.wish-time { display: block; font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+.wish-empty { grid-column: 1 / -1; text-align: center; font-family: var(--serif); font-style: italic; color: var(--muted); padding: 2rem 0; }
+
+/* ---------- Modal lời chúc ---------- */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 65;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(61, 42, 47, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fade-in 0.25s ease;
+}
+.modal[hidden] { display: none; }
+@keyframes fade-in { from { opacity: 0; } }
+.modal-card {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: calc(100svh - 32px);
+  overflow-y: auto;
+  padding: 2.2rem 1.8rem 1.8rem;
+  background: #fffaf7;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
   display: grid;
-  justify-items: center;
-  gap: 0.3rem;
+  gap: 1rem;
+  text-align: center;
+  animation: modal-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
-.gift-side { font-family: var(--serif); font-weight: 500; font-size: 1.4rem; margin-bottom: 0.6rem; }
-.gift-qr { width: 200px; margin-bottom: 0.8rem; border-radius: var(--radius-sm); padding: 8px; background: #fff; box-shadow: 0 0 0 1px var(--line); }
-.gift-bank { font-size: 0.8rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
-.gift-account { font-family: var(--serif); font-size: 1.6rem; font-weight: 500; }
-.gift-holder { font-size: 0.85rem; margin-bottom: 0.8rem; }
+@keyframes modal-in { from { opacity: 0; transform: translateY(16px) scale(0.97); } }
+.modal-close { position: absolute; top: 10px; right: 12px; width: 40px; height: 40px; font-size: 1.8rem; color: var(--muted); }
+.modal-title { font-family: var(--serif); font-weight: 500; font-size: 1.9rem; }
+.modal-sub { margin-top: -0.8rem; font-size: 1.6rem; color: var(--rose); }
+.field { display: grid; gap: 0.35rem; text-align: left; position: relative; }
+.field span { font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+.field input, .field textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  font: inherit;
+  font-size: 16px; /* tránh iOS tự phóng to khi gõ */
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid rgba(196, 106, 125, 0.2);
+  border-radius: var(--radius-sm);
+  resize: vertical;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 4px rgba(196, 106, 125, 0.12); }
+.counter { justify-self: end; font-size: 0.7rem; color: var(--muted); }
+.form-error { min-height: 1.2em; margin: -0.4rem 0; font-size: 0.85rem; color: #b23a4f; }
+.modal-card .btn:disabled { opacity: 0.6; cursor: wait; transform: none; }
+body.modal-open { overflow: hidden; }
+/* Ẩn huy hiệu reCAPTCHA nổi ở góc; Google cho phép khi có dòng ghi chú trong form. */
+.grecaptcha-badge { visibility: hidden; }
+.recaptcha-note { order: 10; margin-top: -0.3rem; font-size: 0.68rem; line-height: 1.5; color: var(--muted); }
+.recaptcha-note a { color: inherit; }
 
 .footer {
   position: relative;
@@ -496,4 +665,5 @@ main { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .reveal { transition: none; opacity: 1; transform: none; }
   html { scroll-behavior: auto; }
+  .guest-name { animation: none; }
 }

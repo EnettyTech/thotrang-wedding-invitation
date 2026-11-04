@@ -36,7 +36,10 @@
       <div class="intro-card">
         <p class="eyebrow">Thiệp mời cưới</p>
         <p class="script intro-names"><span data-bind="groom.name"></span> <em>&amp;</em> <span data-bind="bride.name"></span></p>
-        <p class="intro-guest">Gửi <strong id="intro-guest"></strong></p>
+        <p class="intro-guest">
+          <span class="eyebrow">Thân gửi</span>
+          <span class="guest"><strong class="guest-name" id="intro-guest"></strong></span>
+        </p>
         <button id="open-btn" class="seal" aria-label="Mở thiệp"></button>
         <p class="hint">Chạm vào con dấu để mở thiệp</p>
       </div>
@@ -58,7 +61,7 @@
         <section class="hero" data-stage>
           <div class="hero-text">
             <p class="eyebrow reveal">Trân trọng kính mời</p>
-            <p class="hero-guest reveal" id="hero-guest"></p>
+            <p class="hero-guest reveal"><span class="guest"><span class="guest-name" id="hero-guest"></span></span></p>
             <p class="eyebrow reveal">đến dự lễ thành hôn của</p>
             <h1 class="script hero-names reveal">
               <span data-bind="groom.name"></span>
@@ -122,10 +125,12 @@
       </section>
 
       <!-- Mừng cưới -->
-      <section class="panel" id="gifts">
-        <h2 class="section-title reveal">Hộp mừng cưới</h2>
-        <p class="lead reveal">Sự hiện diện của bạn là món quà quý giá nhất. Nếu ở xa không thể đến chung vui, bạn có thể gửi lời chúc qua đây.</p>
-        <div class="gift-list" id="gift-list"></div>
+      <section class="panel" id="wishes">
+        <h2 class="section-title reveal">Lời chúc yêu thương</h2>
+        <p class="lead reveal">Sự hiện diện của bạn là món quà quý giá nhất. Nếu ở xa không thể đến chung vui, hãy gửi lời chúc chân thành nhất đến mình.</p>
+        <button class="btn reveal" id="wish-open">Gửi lời chúc</button>
+        <p class="wish-count" id="wish-count"></p>
+        <div class="wish-list" id="wish-list" aria-live="polite"></div>
       </section>
 
       <footer class="footer">
@@ -143,6 +148,31 @@
       <button class="lb-prev" aria-label="Ảnh trước">‹</button>
       <img alt="" />
       <button class="lb-next" aria-label="Ảnh sau">›</button>
+    </div>
+
+    <!-- Gửi lời chúc -->
+    <div id="wish-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="wish-title">
+      <form class="modal-card" id="wish-form" novalidate>
+        <button type="button" class="modal-close" aria-label="Đóng">×</button>
+        <h3 class="modal-title" id="wish-title">Gửi lời chúc</h3>
+        <p class="modal-sub script" id="wish-to"></p>
+        <label class="field">
+          <span>Tên của bạn</span>
+          <input name="name" type="text" autocomplete="name" placeholder="Ví dụ: Anh Tuấn" required />
+        </label>
+        <label class="field">
+          <span>Lời chúc</span>
+          <textarea name="message" rows="5" placeholder="Viết đôi lời gửi đến cô dâu chú rể…" required></textarea>
+          <small class="counter"></small>
+        </label>
+        <p class="form-error" role="alert"></p>
+        <p class="recaptcha-note">
+          Trang được bảo vệ bởi reCAPTCHA. Áp dụng
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Chính sách bảo mật</a> và
+          <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Điều khoản</a> của Google.
+        </p>
+        <button class="btn" type="submit">Gửi lời chúc</button>
+      </form>
     </div>
 
     <div id="toast" role="status"></div>

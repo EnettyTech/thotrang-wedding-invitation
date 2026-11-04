@@ -4,6 +4,7 @@ import { config } from './config.js';
 import { createScene, hasWebGL } from './scene.js';
 import { renderSeal, openSeal } from './seal.js';
 import { createGarden } from './garden.js';
+import { setupWishes } from './wishes.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (tag, cls, text) => {
@@ -13,8 +14,9 @@ const el = (tag, cls, text) => {
   return n;
 };
 
-// ---------- Tên khách từ link: ?to=Anh%20Tu%E1%BA%A5n ----------
-const guest = (new URLSearchParams(location.search).get('to') || '').trim().slice(0, 60) || config.defaultGuest;
+// ---------- Tên khách từ link: ?to=Anh%20Tu%E1%BA%A5n (hoặc ?ref=...) ----------
+const params = new URLSearchParams(location.search);
+const guest = (params.get('to') || params.get('ref') || '').trim().slice(0, 60) || config.defaultGuest;
 
 // ---------- Đổ nội dung từ config ----------
 function bindText() {
@@ -120,35 +122,6 @@ function renderGallery() {
     btn.append(img);
     btn.addEventListener('click', () => openLightbox(i));
     root.append(btn);
-  });
-}
-
-function renderGifts() {
-  const root = $('#gift-list');
-  config.gifts.forEach((g) => {
-    const card = el('article', 'gift reveal');
-    const img = el('img', 'gift-qr');
-    img.src = g.qr;
-    img.alt = `Mã QR ${g.side}`;
-    img.loading = 'lazy';
-    const copy = el('button', 'btn small', 'Sao chép số tài khoản');
-    copy.addEventListener('click', async () => {
-      try {
-        await navigator.clipboard.writeText(g.account.replace(/\s/g, ''));
-        toast('Đã sao chép số tài khoản');
-      } catch {
-        toast(g.account);
-      }
-    });
-    card.append(
-      el('h3', 'gift-side', g.side),
-      img,
-      el('p', 'gift-bank', g.bank),
-      el('p', 'gift-account', g.account),
-      el('p', 'gift-holder', g.holder),
-      copy,
-    );
-    root.append(card);
   });
 }
 
@@ -338,7 +311,7 @@ function boot() {
   renderChapters();
   renderEvents();
   renderGallery();
-  renderGifts();
+  setupWishes({ config, guest, toast });
   setupLightbox();
   setupMusic();
   startCountdown();
