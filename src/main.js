@@ -5,6 +5,7 @@ import { createScene, hasWebGL } from './scene.js';
 import { renderSeal, openSeal } from './seal.js';
 import { createGarden } from './garden.js';
 import { setupWishes } from './wishes.js';
+import { stableHeight, onViewportChange } from './viewport.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (tag, cls, text) => {
@@ -16,7 +17,15 @@ const el = (tag, cls, text) => {
 
 // ---------- Tên khách từ link: ?to=Anh%20Tu%E1%BA%A5n (hoặc ?ref=...) ----------
 const params = new URLSearchParams(location.search);
-const guest = (params.get('to') || params.get('ref') || '').trim().slice(0, 60) || config.defaultGuest;
+const guest = clampName((params.get('to') || params.get('ref') || '').trim().replace(/\s+/g, ' ')) || config.defaultGuest;
+
+// Giới hạn 80 ký tự; nếu dài hơn thì cắt ở khoảng trắng gần nhất thay vì cắt giữa chữ.
+function clampName(name, max = 80) {
+  const chars = [...name];
+  if (chars.length <= max) return name;
+  const cut = chars.slice(0, max).join('');
+  return cut.slice(0, cut.lastIndexOf(' ') > max / 2 ? cut.lastIndexOf(' ') : undefined) + '…';
+}
 
 // ---------- Đổ nội dung từ config ----------
 function bindText() {
@@ -29,6 +38,10 @@ function bindText() {
   $('#monogram').textContent = config.monogram;
   $('#intro-guest').textContent = guest;
   $('#hero-guest').textContent = guest;
+  // Tên dài thì thu nhỏ chữ để bìa thiệp không bị đẩy quá cao.
+  const len = [...guest].length;
+  const size = len > 28 ? 'xlong' : len > 16 ? 'long' : '';
+  if (size) document.querySelectorAll('.guest').forEach((g) => g.classList.add(size));
   $('#groom-parents').innerHTML = config.groom.parents.map(escapeHtml).join('<br>');
   $('#bride-parents').innerHTML = config.bride.parents.map(escapeHtml).join('<br>');
   $('#union-photo').src = config.coverPhoto;
@@ -288,7 +301,7 @@ function setupScene(manager) {
   const sections = [...document.querySelectorAll('[data-stage]')];
   const journey = $('#journey');
   const onScroll = () => {
-    const mid = window.innerHeight / 2;
+    const mid = stableHeight() / 2;
     let stage = 0;
     for (let i = 0; i < sections.length; i++) {
       const r = sections[i].getBoundingClientRect();
@@ -298,7 +311,7 @@ function setupScene(manager) {
     scene.setRunning(journey.getBoundingClientRect().bottom > 0);
   };
   window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
+  onViewportChange(onScroll);
   onScroll();
   return scene;
 }

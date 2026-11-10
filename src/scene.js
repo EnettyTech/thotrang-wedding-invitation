@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { stableHeight, onViewportChange } from './viewport.js';
 
 const STORY_GAP = 12; // khoảng cách theo trục z giữa các khung ảnh
 const PHOTO_W = 1.9;
@@ -119,7 +120,7 @@ export function createScene({ canvas, storyPhotos, coverPhoto, manager }) {
 
   function layout() {
     const w = window.innerWidth;
-    const h = window.innerHeight;
+    const h = stableHeight();
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
@@ -173,7 +174,7 @@ export function createScene({ canvas, storyPhotos, coverPhoto, manager }) {
     pointer.x = e.clientX / window.innerWidth - 0.5;
     pointer.y = e.clientY / window.innerHeight - 0.5;
   });
-  window.addEventListener('resize', layout);
+  onViewportChange(layout);
   layout();
 
   function tick() {

@@ -80,8 +80,14 @@ button { font: inherit; color: inherit; cursor: pointer; background: none; borde
 #intro {
   z-index: 40;
   background: radial-gradient(ellipse at center, #fffaf7 0%, var(--bg) 70%);
+  /* Cuộn được khi bìa cao hơn màn hình (tên khách dài, màn hình thấp) để con dấu không bị khuất */
+  display: flex;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 0;
 }
 .intro-card {
+  margin: auto;
   text-align: center;
   padding: 3.5rem 2.5rem;
   border-radius: var(--radius-lg);
@@ -130,6 +136,12 @@ button { font: inherit; color: inherit; cursor: pointer; background: none; borde
   animation: guest-shimmer 7s linear infinite;
 }
 @keyframes guest-shimmer { to { background-position: -220% center; } }
+/* Tên dài: bỏ đường kẻ hai bên để tên dùng hết bề ngang, và thu nhỏ chữ theo độ dài */
+.guest.long::before, .guest.long::after, .guest.xlong::before, .guest.xlong::after { display: none; }
+.guest.long .guest-name { font-size: clamp(1.9rem, 6.5vw, 2.6rem); }
+.guest.xlong .guest-name { font-size: clamp(1.6rem, 5.4vw, 2.1rem); line-height: 1.3; }
+.hero-guest .guest.long .guest-name { font-size: clamp(2.2rem, 7.5vw, 3.4rem); }
+.hero-guest .guest.xlong .guest-name { font-size: clamp(1.8rem, 6vw, 2.6rem); }
 .hint { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; }
 
 /* Con dấu sáp tròn */
@@ -176,7 +188,8 @@ button { font: inherit; color: inherit; cursor: pointer; background: none; borde
 .intro-card, .hero-text { position: relative; z-index: 1; }
 
 /* ---------- Canvas & topbar ---------- */
-#scene { position: fixed; inset: 0; width: 100vw; height: 100vh; z-index: 0; }
+/* Canvas cao bằng khung nhìn lớn nhất để không co giãn khi thanh trình duyệt ẩn hiện */
+#scene { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; height: 100lvh; z-index: 0; }
 .no-webgl #scene { display: none; }
 
 .topbar {
@@ -647,6 +660,7 @@ body.modal-open { overflow: hidden; }
 
 /* ---------- Điện thoại ---------- */
 @media (max-width: 760px) {
+  .intro-card { padding: 2.6rem 1.5rem; gap: 0.9rem; }
   .webgl .hero-text { margin-top: 40vh; }
   .sticky { align-items: flex-end; padding-bottom: 6vh; }
   .chapter.right .sticky { justify-content: center; }
