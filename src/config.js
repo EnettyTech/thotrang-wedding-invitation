@@ -55,7 +55,7 @@ export const config = {
   ],
 
   // Ảnh cưới chính – xuất hiện phía sau đôi nhẫn.
-  coverPhoto: '/photos/cover.jpg',
+  coverPhoto: '/photos/cover.jpeg',
 
   events: [
     {
