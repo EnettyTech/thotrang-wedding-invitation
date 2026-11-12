@@ -72,6 +72,25 @@
       button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
       button.ghost:hover { color: var(--rose); border-color: var(--rose); }
       button.small { padding: 0.55em 1.1em; font-size: 0.66rem; }
+      .grid3 { display: grid; grid-template-columns: 1fr 1fr 1.3fr; gap: 0.8rem; }
+      @media (max-width: 520px) { .grid3 { grid-template-columns: 1fr 1fr; } .grid3 label:last-child { grid-column: 1 / -1; } }
+      .meal-fields { border: 0; min-width: 0; transition: opacity 0.2s; }
+      .meal-fields:disabled { opacity: 0.45; }
+      select {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        font: inherit;
+        font-size: 16px;
+        color: var(--ink);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+      select:focus { outline: none; border-color: var(--rose); box-shadow: 0 0 0 4px rgba(196, 106, 125, 0.12); }
+      .check { display: flex; align-items: center; gap: 0.6rem; cursor: pointer; }
+      .check input { width: 18px; height: 18px; accent-color: var(--rose); }
+      .check span { font-size: 0.85rem; letter-spacing: 0.04em; text-transform: none; color: var(--ink); }
+      .result-meal { font-size: 0.8rem; color: var(--muted); }
       .results { display: grid; gap: 0.8rem; }
       .results:empty { display: none; }
       .result { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 1rem 1.1rem; display: grid; gap: 0.5rem; }
@@ -103,11 +122,36 @@
         </label>
         <p class="hint">Mỗi dòng một khách. Có thể dán cả danh sách từ Excel hoặc Zalo.</p>
 
+        <label class="check">
+          <input id="meal-on" type="checkbox" checked />
+          <span>Mời dùng bữa cơm thân mật</span>
+        </label>
+        <fieldset class="meal-fields" id="meal-fields">
+          <div class="grid3">
+            <label>
+              <span>Ngày</span>
+              <input id="meal-date" type="date" value="2026-12-11" />
+            </label>
+            <label>
+              <span>Giờ</span>
+              <input id="meal-time" type="time" value="17:00" />
+            </label>
+            <label>
+              <span>Nơi tổ chức</span>
+              <select id="meal-venue">
+                <option value="trai" selected>Tư gia nhà trai</option>
+                <option value="gai">Tư gia nhà gái</option>
+              </select>
+            </label>
+          </div>
+        </fieldset>
+        <p class="hint">Bỏ chọn nếu những khách này không được mời dùng bữa: thiệp sẽ không hiện mục bữa cơm thân mật.</p>
+
         <label>
           <span>Lời mời kèm link (tuỳ chọn)</span>
           <textarea id="template" rows="3"></textarea>
         </label>
-        <p class="hint"><b>{ten}</b> sẽ được thay bằng tên khách, <b>{link}</b> bằng link mời.</p>
+        <p class="hint"><b>{ten}</b> sẽ được thay bằng tên khách, <b>{link}</b> bằng link mời, <b>{gio}</b>, <b>{ngay}</b>, <b>{noi}</b> bằng giờ, ngày, nơi tổ chức bữa cơm thân mật.</p>
 
         <div class="row">
           <button id="make">Tạo link</button>
@@ -142,18 +186,47 @@
 
       let items = [];
 
+      let meal = null;
+      const VENUES = { trai: 'Tư gia nhà trai', gai: 'Tư gia nhà gái' };
+      // Bật/tắt mời dùng bữa thì khoá hoặc mở các ô ngày, giờ, nơi tổ chức.
+      const syncMeal = () => ($('meal-fields').disabled = !$('meal-on').checked);
+      $('meal-on').addEventListener('change', syncMeal);
+      syncMeal();
+
       const linkFor = (name) => {
         // Link trỏ về trang chủ của chính tên miền đang mở trang này.
         const url = new URL('/', location.origin);
         url.searchParams.set('to', name);
+        if (meal) {
+          url.searchParams.set('gio', meal.time);
+          url.searchParams.set('ngay', meal.date);
+          url.searchParams.set('noi', meal.venue);
+        }
         return url.toString();
       };
-      const messageFor = (it) => $('template').value.replaceAll('{ten}', it.name).replaceAll('{link}', it.link);
+      const vnDate = (iso) => iso.split('-').reverse().join('/');
+      const messageFor = (it) =>
+        $('template').value
+          .replaceAll('{ten}', () => it.name)
+          .replaceAll('{link}', () => it.link)
+          .replaceAll('{gio}', () => it.meal?.time ?? '')
+          .replaceAll('{ngay}', () => (it.meal ? vnDate(it.meal.date) : ''))
+          .replaceAll('{noi}', () => (it.meal ? VENUES[it.meal.venue] : ''));
 
       function make() {
         const names = [...new Set($('names').value.split('\n').map((s) => s.trim().replace(/\s+/g, ' ')).filter(Boolean))];
         if (!names.length) return toast('Bạn nhập ít nhất một tên khách nhé');
-        items = names.map((name) => ({ name: [...name].slice(0, 80).join(''), link: linkFor([...name].slice(0, 80).join('')) }));
+        meal = null;
+        if ($('meal-on').checked) {
+          const date = $('meal-date').value;
+          const time = $('meal-time').value;
+          if (!date || !time) return toast('Bữa cơm thân mật cần cả ngày và giờ');
+          meal = { date, time, venue: $('meal-venue').value };
+        }
+        items = names.map((raw) => {
+          const name = [...raw].slice(0, 80).join('');
+          return { name, meal, link: linkFor(name) };
+        });
         store.set('invite-template', $('template').value);
         render();
       }
@@ -183,7 +256,14 @@
             if (navigator.share) {
               row.append(button('Chia sẻ', () => navigator.share({ title: 'Thiệp cưới', text: messageFor(it) }).catch(() => {})));
             }
-            card.append(name, link, row);
+            card.append(name);
+            if (it.meal) {
+              const m = document.createElement('p');
+              m.className = 'result-meal';
+              m.textContent = `Bữa cơm thân mật: ${it.meal.time} · ${vnDate(it.meal.date)} · ${VENUES[it.meal.venue]}`;
+              card.append(m);
+            }
+            card.append(link, row);
             return card;
           }),
         );

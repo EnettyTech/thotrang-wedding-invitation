@@ -73,17 +73,20 @@ export const config = {
       place: 'Tư gia nhà trai',
       address: 'Xóm 8, Nga Yên, Nga Sơn, Thanh Hóa',
       mapQuery: 'Xóm 8, Nga Yên, Nga Sơn, Thanh Hóa',
-    },
-    {
-      title: 'Tiệc Cưới',
-      time: '11:00',
-      date: '12/12/2026',
-      place: 'Tư gia nhà trai',
-      address: 'Xóm 8, Nga Yên, Nga Sơn, Thanh Hóa',
-      mapQuery: 'Xóm 8, Nga Yên, Nga Sơn, Thanh Hóa',
       main: true, // bản đồ nhúng + nút "Thêm vào lịch"
     },
   ],
+
+  // Bữa cơm thân mật: giờ, ngày, nơi nhập ở trang /tao-link.html và đi theo link mời (?gio=...&ngay=...&noi=...).
+  // Link không có giờ, ngày thì thiệp không hiện mục này.
+  // Nơi tổ chức chọn ở trang tạo link (?noi=trai hoặc ?noi=gai), mặc định nhà trai.
+  meal: {
+    title: 'Bữa cơm thân mật',
+    venues: {
+      trai: { place: 'Tư gia nhà trai', address: 'Xóm 8, Nga Yên, Nga Sơn, Thanh Hóa' },
+      gai: { place: 'Tư gia nhà gái', address: 'H5-5 Đại lộ Nam Sông Mã Đỗ Huy Cư, Thành phố Thanh Hóa' },
+    },
+  },
 
   gallery: [
     '/photos/album-1.jpg',

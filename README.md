@@ -51,6 +51,11 @@ Muốn xoá lời chúc không phù hợp: vào Firestore Database trên Firebas
 
 ## Link mời riêng từng khách
 
+Cách dễ nhất: mở `/tao-link.html` trên tên miền của thiệp (trang này không có link nào dẫn tới), nhập tên khách,
+và chọn ngày, giờ, nơi tổ chức **bữa cơm thân mật** (mặc định 11/12/2026, 17:00, tư gia nhà trai; bỏ chọn nếu không mời dùng bữa).
+Link sẽ có dạng `/?to=Anh%20Tuấn&gio=17:00&ngay=2026-12-11&noi=trai` (`noi=gai` cho nhà gái); không có `gio` và `ngay` thì thiệp
+không hiện mục bữa cơm. Tên và địa chỉ hai nơi sửa ở mục `meal.venues` trong `src/config.js`.
+
 Thêm `?to=Tên khách` vào cuối link, ví dụ `https://thiep.cua-ban.com/?to=Anh%20Tuấn`.
 
 Tạo hàng loạt: ghi mỗi tên một dòng vào `tools/guests.txt`, rồi chạy

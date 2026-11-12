@@ -57,7 +57,7 @@ function renderChapters() {
     const sec = el('section', `chapter ${i % 2 === 0 ? 'left' : 'right'}`);
     sec.dataset.stage = '';
     const sticky = el('div', 'sticky');
-    const card = el('article', 'chapter-card reveal');
+    const card = el('article', 'chapter-card ornate reveal');
     card.append(
       el('p', 'chapter-year', ch.year),
       el('h2', 'chapter-title', ch.title),
@@ -76,7 +76,7 @@ function renderChapters() {
 function renderEvents() {
   const root = $('#events');
   config.events.forEach((ev) => {
-    const card = el('article', `event reveal${ev.main ? ' main' : ''}`);
+    const card = el('article', `event ornate reveal${ev.main ? ' main' : ''}`);
     const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.address)}`;
     card.append(
       el('h3', 'event-title', ev.title),
@@ -110,13 +110,64 @@ function renderEvents() {
   });
 }
 
-function calendarUrl(ev) {
-  const start = new Date(config.date);
+// Bữa cơm thân mật từ link mời: ?gio=17:30&ngay=2026-12-11. Thiếu hoặc sai định dạng thì không hiện.
+const meal = parseMeal(params.get('gio'), params.get('ngay'), params.get('noi'));
+
+function parseMeal(gio, ngay, noi) {
+  const t = /^(\d{1,2})[:h](\d{2})/.exec((gio || '').trim());
+  const d = /^(\d{4})-(\d{2})-(\d{2})$/.exec((ngay || '').trim());
+  if (!t || !d || +t[1] > 23 || +t[2] > 59) return null;
+  const time = `${t[1].padStart(2, '0')}:${t[2]}`;
+  const start = new Date(`${d[1]}-${d[2]}-${d[3]}T${time}:00+07:00`);
+  if (Number.isNaN(start.getTime())) return null;
+  return { time, date: `${d[3]}/${d[2]}/${d[1]}`, start, venue: noi === 'gai' ? 'gai' : 'trai' };
+}
+
+// "12/12/2026" + "10:10" hoặc "9h10" → Date giờ Việt Nam.
+function eventStart(ev) {
+  if (ev.start) return ev.start;
+  const d = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(ev.date || '');
+  const t = /^(\d{1,2})[:h](\d{2})/.exec(ev.time || '');
+  if (!d || !t) return new Date(config.date);
+  const pad = (n) => String(n).padStart(2, '0');
+  return new Date(`${d[3]}-${pad(d[2])}-${pad(d[1])}T${pad(t[1])}:${t[2]}:00+07:00`);
+}
+
+function renderMeal() {
+  if (!meal || !config.meal) return;
+  const ev = { title: config.meal.title, ...config.meal.venues[meal.venue], ...meal };
+  const card = el('article', 'meal reveal');
+  const invite = el('p', 'meal-invite');
+  invite.append('Trân trọng kính mời ', el('strong', null, guest), ' ở lại dùng');
+  card.append(
+    invite,
+    el('h3', 'meal-title', ev.title),
+    el('p', 'meal-time', ev.time),
+    el('p', 'meal-date', ev.date),
+    el('p', 'event-place', ev.place),
+    el('p', 'event-address', ev.address),
+  );
+  const actions = el('div', 'event-actions');
+  const dir = el('a', 'btn ghost small', 'Chỉ đường');
+  dir.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.address)}`;
+  dir.target = '_blank';
+  dir.rel = 'noopener';
+  const cal = el('a', 'btn ghost small', 'Thêm vào lịch');
+  cal.href = calendarUrl(ev, `${ev.title} – Đám cưới ${config.groom.name} & ${config.bride.name}`);
+  cal.target = '_blank';
+  cal.rel = 'noopener';
+  actions.append(dir, cal);
+  card.append(actions);
+  $('#meal').append(card);
+}
+
+function calendarUrl(ev, title = `Đám cưới ${config.groom.name} & ${config.bride.name}`) {
+  const start = eventStart(ev);
   const end = new Date(start.getTime() + 3 * 3600 * 1000);
   const fmt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const params = new URLSearchParams({
     action: 'TEMPLATE',
-    text: `Đám cưới ${config.groom.name} & ${config.bride.name}`,
+    text: title,
     dates: `${fmt(start)}/${fmt(end)}`,
     location: `${ev.place}, ${ev.address}`,
   });
@@ -128,11 +179,16 @@ function renderGallery() {
   config.gallery.forEach((src, i) => {
     const btn = el('button', 'gallery-item reveal');
     btn.setAttribute('aria-label', `Xem ảnh ${i + 1}`);
+    btn.style.transitionDelay = `${(i % 3) * 0.12}s`;
+    // Khung hoa văn nằm trong phần tử riêng để độ nghiêng không bị hiệu ứng hiện dần ghi đè.
+    const frame = el('figure', 'frame ornate');
     const img = el('img');
     img.src = src;
     img.alt = `Ảnh cưới ${i + 1}`;
     img.loading = 'lazy';
-    btn.append(img);
+    const caption = el('figcaption', 'frame-caption', `No. ${String(i + 1).padStart(2, '0')}`);
+    frame.append(img, caption);
+    btn.append(frame);
     btn.addEventListener('click', () => openLightbox(i));
     root.append(btn);
   });
@@ -323,6 +379,7 @@ function boot() {
   bindText();
   renderChapters();
   renderEvents();
+  renderMeal();
   renderGallery();
   setupWishes({ config, guest, toast });
   setupLightbox();

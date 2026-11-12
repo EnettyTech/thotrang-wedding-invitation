@@ -289,6 +289,14 @@ function makePolaroid(loader, src) {
   photo.position.z = 0.021;
   group.add(photo);
 
+  // Lớp hoa văn trong suốt đặt trước ảnh: viền kép vàng đồng và dây leo bốn góc, giống khung ảnh album.
+  const ornament = new THREE.Mesh(
+    frame.geometry,
+    new THREE.MeshBasicMaterial({ map: ornamentTexture(), transparent: true, depthWrite: false, toneMapped: false }),
+  );
+  ornament.position.set(0, -0.17, 0.03);
+  group.add(ornament);
+
   loader.load(src, (tex) => {
     tex.colorSpace = THREE.SRGBColorSpace;
     coverFit(tex, PHOTO_W / PHOTO_H);
@@ -297,6 +305,91 @@ function makePolaroid(loader, src) {
     mat.needsUpdate = true;
   });
   return group;
+}
+
+// Texture hoa văn cho khung ảnh 3D, vẽ một lần rồi dùng chung cho mọi khung.
+let ornamentTex = null;
+function ornamentTexture() {
+  if (ornamentTex) return ornamentTex;
+  const fw = PHOTO_W + 0.3;
+  const fh = PHOTO_H + 0.65;
+  const W = 1024;
+  const H = Math.round((W * fh) / fw);
+  const unit = W / fw; // số pixel cho 1 đơn vị trong cảnh
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext('2d');
+  const gold = (a) => `rgba(179, 139, 85, ${a})`;
+
+  // Viền kép bên trong, chạy trong phần lề trắng của khung.
+  const radius = 0.16 * unit;
+  const line = (inset, width, alpha) => {
+    ctx.beginPath();
+    ctx.roundRect(inset, inset, W - inset * 2, H - inset * 2, Math.max(4, radius - inset));
+    ctx.lineWidth = width;
+    ctx.strokeStyle = gold(alpha);
+    ctx.stroke();
+  };
+  line(0.05 * unit, 3, 0.6);
+  line(0.075 * unit, 2, 0.35);
+
+  // Dây leo bốn góc: cùng nét vẽ với hoa văn CSS (khung 44×44), lật gương cho từng góc.
+  const size = W * 0.19;
+  const strokes = ['M5 34V11Q5 5 11 5H34', 'M10 28Q10 10 28 10'].map((d) => new Path2D(d));
+  const thin = new Path2D('M5 22q7 0 9 -6q2 6 9 6');
+  const fills = ['M34 5q5 -1 7 3q-4 2 -7 -3z', 'M5 34q-1 5 3 7q2 -4 -3 -7z'].map((d) => new Path2D(d));
+  const dots = [[15.5, 15.5, 2.2], [22, 10, 1], [10, 22, 1]];
+  for (const [sx, sy] of [[1, 1], [-1, 1], [1, -1], [-1, -1]]) {
+    ctx.save();
+    ctx.translate(sx > 0 ? 4 : W - 4, sy > 0 ? 4 : H - 4);
+    ctx.scale((sx * size) / 44, (sy * size) / 44);
+    ctx.strokeStyle = gold(0.95);
+    ctx.fillStyle = gold(0.95);
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 1.3;
+    strokes.forEach((p) => ctx.stroke(p));
+    ctx.lineWidth = 1;
+    ctx.stroke(thin);
+    fills.forEach((p) => ctx.fill(p));
+    for (const [x, y, r] of dots) {
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Lề dưới: trái tim nhỏ giữa hai đường kẻ.
+  const cy = H - (0.65 / 2 - 0.02) * unit;
+  const grad = (x0, x1, a0, a1) => {
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+    g.addColorStop(0, gold(a0));
+    g.addColorStop(1, gold(a1));
+    return g;
+  };
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = grad(W / 2 - 130, W / 2 - 30, 0, 0.8);
+  ctx.beginPath();
+  ctx.moveTo(W / 2 - 130, cy);
+  ctx.lineTo(W / 2 - 30, cy);
+  ctx.stroke();
+  ctx.strokeStyle = grad(W / 2 + 30, W / 2 + 130, 0.8, 0);
+  ctx.beginPath();
+  ctx.moveTo(W / 2 + 30, cy);
+  ctx.lineTo(W / 2 + 130, cy);
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(W / 2, cy);
+  ctx.scale(0.75, 0.75);
+  ctx.fillStyle = 'rgba(196, 106, 125, 0.85)';
+  ctx.fill(new Path2D('M0 14C-18 2 -16 -14 -6 -14C-2 -14 0 -11 0 -8C0 -11 2 -14 6 -14C16 -14 18 2 0 14Z'));
+  ctx.restore();
+
+  ornamentTex = new THREE.CanvasTexture(c);
+  ornamentTex.colorSpace = THREE.SRGBColorSpace;
+  ornamentTex.anisotropy = 4;
+  return ornamentTex;
 }
 
 // Hình chữ nhật bo góc, UV trải 0..1 như PlaneGeometry để gắn ảnh.
