@@ -51,20 +51,18 @@ Muốn xoá lời chúc không phù hợp: vào Firestore Database trên Firebas
 
 ## Link mời riêng từng khách
 
-Cách dễ nhất: mở `/tao-link.html` trên tên miền của thiệp (trang này không có link nào dẫn tới), nhập tên khách,
-và chọn ngày, giờ, nơi tổ chức **bữa cơm thân mật** (mặc định 11/12/2026, 17:00, tư gia nhà trai; bỏ chọn nếu không mời dùng bữa).
-Link sẽ có dạng `/?to=Anh%20Tuấn&gio=17:00&ngay=2026-12-11&noi=trai` (`noi=gai` cho nhà gái); không có `gio` và `ngay` thì thiệp
-không hiện mục bữa cơm. Tên và địa chỉ hai nơi sửa ở mục `meal.venues` trong `src/config.js`.
+Mở `/tao-link.html` trên tên miền của thiệp (không có link nào dẫn tới trang này), nhập tên khách, chọn ngày, giờ, nơi tổ chức
+**bữa cơm thân mật** (mặc định 11/12/2026, 17:00, tư gia nhà trai; bỏ chọn nếu không mời dùng bữa) rồi bấm **Tạo link**.
 
-Thêm `?to=Tên khách` vào cuối link, ví dụ `https://thiep.cua-ban.com/?to=Anh%20Tuấn`.
+Mỗi lời mời được lưu vào Firestore (collection `invites`) với mã ngắn 6 ký tự, link gửi khách có dạng `/?i=Ab3dE9`.
+Thiệp đọc mã để lấy tên khách và bữa cơm; middleware đọc mã để phần mô tả khi chia sẻ link có tên khách.
 
-Tạo hàng loạt: ghi mỗi tên một dòng vào `tools/guests.txt`, rồi chạy
-
-```bash
-npm run links -- https://thiep.cua-ban.com
-```
-
-Kết quả nằm ở `tools/links.csv` (mở bằng Excel hoặc Google Sheets).
+- Cần Publish `firestore.rules` mới (đã có quy tắc cho `invites`): ai có mã mới đọc được, không ai liệt kê được danh sách
+  khách, không ai sửa hay xoá được. Muốn sửa tên hay xoá lời mời: Firebase Console → Firestore → `invites`.
+- Khi đã **Enforce App Check**, middleware không đọc được Firestore bằng API key nữa. Lúc đó tạo service account
+  (Firebase Console → Project settings → Service accounts → Generate new private key), rồi trên Vercel thêm biến
+  `FIREBASE_SERVICE_ACCOUNT` = toàn bộ nội dung file JSON, type **Secret**, và Redeploy.
+- Link dài kiểu cũ vẫn dùng được: `/?to=Anh%20Tuấn&gio=17:00&ngay=2026-12-11&noi=trai`.
 
 ## Đưa lên mạng
 

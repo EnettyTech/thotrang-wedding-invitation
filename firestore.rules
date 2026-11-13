@@ -14,5 +14,28 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow update, delete: if false;
     }
+
+    // Lời mời: ai có đúng mã mới đọc được (get), không ai liệt kê được danh sách khách (list),
+    // tạo mới thì được nhưng không sửa, xoá, ghi đè được. Sửa hay xoá lời mời làm trên Firebase Console.
+    match /invites/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if id.matches('^[A-Za-z0-9]{4,12}$')
+        && request.resource.data.keys().hasOnly(['name', 'meal', 'createdAt'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.name.size() <= 80
+        && request.resource.data.createdAt == request.time
+        && (!('meal' in request.resource.data) || validMeal(request.resource.data.meal));
+      allow update, delete: if false;
+    }
+
+    function validMeal(meal) {
+      return meal is map
+        && meal.keys().hasOnly(['date', 'time', 'venue'])
+        && meal.date is string && meal.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && meal.time is string && meal.time.matches('^[0-9]{2}:[0-9]{2}$')
+        && meal.venue in ['trai', 'gai'];
+    }
   }
 }

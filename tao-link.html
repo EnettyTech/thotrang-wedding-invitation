@@ -69,6 +69,7 @@
         transition: background 0.2s, transform 0.2s;
       }
       button:hover { background: var(--rose); transform: translateY(-1px); }
+      button:disabled { opacity: 0.6; cursor: wait; transform: none; }
       button.ghost { background: #fff; color: var(--ink); border: 1px solid var(--line); }
       button.ghost:hover { color: var(--rose); border-color: var(--rose); }
       button.small { padding: 0.55em 1.1em; font-size: 0.66rem; }
@@ -112,7 +113,7 @@
       <header>
         <p class="script">Thọ &amp; Trang</p>
         <h1>Tạo link mời khách</h1>
-        <p class="sub">Mỗi khách một link riêng: mở ra thiệp sẽ ghi “Thân gửi” và tên khách.</p>
+        <p class="sub">Mỗi khách một link ngắn riêng: mở ra thiệp sẽ ghi “Thân gửi” và tên khách.</p>
       </header>
 
       <section class="card">
@@ -156,6 +157,7 @@
         <div class="row">
           <button id="make">Tạo link</button>
         </div>
+        <p class="hint" id="status" hidden></p>
       </section>
 
       <section class="card" id="output" hidden>
@@ -172,153 +174,6 @@
     </main>
     <div id="toast" role="status"></div>
 
-    <script>
-      const $ = (id) => document.getElementById(id);
-      const DEFAULT_TEMPLATE =
-        'Thân gửi {ten}, Thọ & Trang trân trọng mời bạn đến chung vui trong ngày cưới của chúng mình. Thiệp mời: {link}';
-
-      // Ghi nhớ lời mời trên máy này cho lần sau.
-      const store = {
-        get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
-        set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
-      };
-      $('template').value = store.get('invite-template') || DEFAULT_TEMPLATE;
-
-      let items = [];
-
-      let meal = null;
-      const VENUES = { trai: 'Tư gia nhà trai', gai: 'Tư gia nhà gái' };
-      // Bật/tắt mời dùng bữa thì khoá hoặc mở các ô ngày, giờ, nơi tổ chức.
-      const syncMeal = () => ($('meal-fields').disabled = !$('meal-on').checked);
-      $('meal-on').addEventListener('change', syncMeal);
-      syncMeal();
-
-      const linkFor = (name) => {
-        // Link trỏ về trang chủ của chính tên miền đang mở trang này.
-        const url = new URL('/', location.origin);
-        url.searchParams.set('to', name);
-        if (meal) {
-          url.searchParams.set('gio', meal.time);
-          url.searchParams.set('ngay', meal.date);
-          url.searchParams.set('noi', meal.venue);
-        }
-        return url.toString();
-      };
-      const vnDate = (iso) => iso.split('-').reverse().join('/');
-      const messageFor = (it) =>
-        $('template').value
-          .replaceAll('{ten}', () => it.name)
-          .replaceAll('{link}', () => it.link)
-          .replaceAll('{gio}', () => it.meal?.time ?? '')
-          .replaceAll('{ngay}', () => (it.meal ? vnDate(it.meal.date) : ''))
-          .replaceAll('{noi}', () => (it.meal ? VENUES[it.meal.venue] : ''));
-
-      function make() {
-        const names = [...new Set($('names').value.split('\n').map((s) => s.trim().replace(/\s+/g, ' ')).filter(Boolean))];
-        if (!names.length) return toast('Bạn nhập ít nhất một tên khách nhé');
-        meal = null;
-        if ($('meal-on').checked) {
-          const date = $('meal-date').value;
-          const time = $('meal-time').value;
-          if (!date || !time) return toast('Bữa cơm thân mật cần cả ngày và giờ');
-          meal = { date, time, venue: $('meal-venue').value };
-        }
-        items = names.map((raw) => {
-          const name = [...raw].slice(0, 80).join('');
-          return { name, meal, link: linkFor(name) };
-        });
-        store.set('invite-template', $('template').value);
-        render();
-      }
-
-      function render() {
-        $('output').hidden = false;
-        $('summary').textContent = `${items.length} link mời`;
-        $('results').replaceChildren(
-          ...items.map((it) => {
-            const card = document.createElement('article');
-            card.className = 'result';
-            const name = document.createElement('p');
-            name.className = 'result-name';
-            name.textContent = it.name;
-            const link = document.createElement('a');
-            link.className = 'result-link';
-            link.href = it.link;
-            link.target = '_blank';
-            link.rel = 'noopener';
-            link.textContent = it.link;
-            const row = document.createElement('div');
-            row.className = 'row';
-            row.append(
-              button('Chép link', () => copy(it.link, 'Đã chép link')),
-              button('Chép lời mời', () => copy(messageFor(it), 'Đã chép lời mời')),
-            );
-            if (navigator.share) {
-              row.append(button('Chia sẻ', () => navigator.share({ title: 'Thiệp cưới', text: messageFor(it) }).catch(() => {})));
-            }
-            card.append(name);
-            if (it.meal) {
-              const m = document.createElement('p');
-              m.className = 'result-meal';
-              m.textContent = `Bữa cơm thân mật: ${it.meal.time} · ${vnDate(it.meal.date)} · ${VENUES[it.meal.venue]}`;
-              card.append(m);
-            }
-            card.append(link, row);
-            return card;
-          }),
-        );
-        $('output').scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-
-      function button(text, onClick) {
-        const b = document.createElement('button');
-        b.className = 'ghost small';
-        b.textContent = text;
-        b.addEventListener('click', onClick);
-        return b;
-      }
-
-      async function copy(text, done) {
-        try {
-          await navigator.clipboard.writeText(text);
-        } catch {
-          // Trình duyệt chặn clipboard (http hoặc webview): chép theo cách cũ.
-          const ta = Object.assign(document.createElement('textarea'), { value: text });
-          document.body.append(ta);
-          ta.select();
-          document.execCommand('copy');
-          ta.remove();
-        }
-        toast(done);
-      }
-
-      function downloadCsv() {
-        const esc = (s) => `"${s.replace(/"/g, '""')}"`;
-        const rows = ['Tên khách,Link,Lời mời', ...items.map((it) => [it.name, it.link, messageFor(it)].map(esc).join(','))];
-        // BOM để Excel đọc đúng tiếng Việt.
-        const blob = new Blob(['﻿' + rows.join('\n')], { type: 'text/csv;charset=utf-8' });
-        const a = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: 'link-moi.csv' });
-        a.click();
-        URL.revokeObjectURL(a.href);
-      }
-
-      let toastTimer;
-      function toast(msg) {
-        const t = $('toast');
-        t.textContent = msg;
-        t.classList.add('show');
-        clearTimeout(toastTimer);
-        toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
-      }
-
-      $('make').addEventListener('click', make);
-      $('copy-all-links').addEventListener('click', () =>
-        copy(items.map((it) => `${it.name}: ${it.link}`).join('\n'), `Đã chép ${items.length} link`),
-      );
-      $('copy-all-msgs').addEventListener('click', () =>
-        copy(items.map(messageFor).join('\n\n'), `Đã chép ${items.length} lời mời`),
-      );
-      $('csv').addEventListener('click', downloadCsv);
-    </script>
+    <script type="module" src="/src/tao-link.js"></script>
   </body>
 </html>

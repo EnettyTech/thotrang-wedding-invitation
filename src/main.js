@@ -6,6 +6,8 @@ import { renderSeal, openSeal } from './seal.js';
 import { createGarden } from './garden.js';
 import { setupWishes } from './wishes.js';
 import { stableHeight, onViewportChange } from './viewport.js';
+import { isInviteId, loadInvite } from './invites.js';
+import { hasFirebase } from './firebase.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const el = (tag, cls, text) => {
@@ -15,9 +17,32 @@ const el = (tag, cls, text) => {
   return n;
 };
 
-// ---------- Tên khách từ link: ?to=Anh%20Tu%E1%BA%A5n (hoặc ?ref=...) ----------
+// ---------- Lời mời từ link ----------
+// Link mới: ?i=Ab3dE9 (mã ngắn, thông tin nằm trong Firestore).
+// Link cũ vẫn dùng được: ?to=Tên&gio=17:00&ngay=2026-12-11&noi=trai.
 const params = new URLSearchParams(location.search);
-const guest = clampName((params.get('to') || params.get('ref') || '').trim().replace(/\s+/g, ' ')) || config.defaultGuest;
+let guest = cleanGuest(params.get('to') || params.get('ref'));
+
+function cleanGuest(raw) {
+  return clampName((raw || '').trim().replace(/\s+/g, ' ')) || config.defaultGuest;
+}
+
+// Đọc lời mời theo mã trước khi hiển thị; lỗi mạng hay mã sai thì dùng lời chào chung.
+async function resolveInvite() {
+  const id = params.get('i');
+  if (!isInviteId(id) || !hasFirebase(config.firebase)) return;
+  try {
+    const invite = await Promise.race([
+      loadInvite(config.firebase, id),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000)),
+    ]);
+    if (!invite) return console.warn('[Lời mời] Không tìm thấy mã', id);
+    guest = cleanGuest(invite.name);
+    meal = invite.meal ? parseMeal(invite.meal.time, invite.meal.date, invite.meal.venue) : null;
+  } catch (err) {
+    console.warn('[Lời mời] Không đọc được lời mời', err);
+  }
+}
 
 // Giới hạn 80 ký tự; nếu dài hơn thì cắt ở khoảng trắng gần nhất thay vì cắt giữa chữ.
 function clampName(name, max = 80) {
@@ -111,7 +136,7 @@ function renderEvents() {
 }
 
 // Bữa cơm thân mật từ link mời: ?gio=17:30&ngay=2026-12-11. Thiếu hoặc sai định dạng thì không hiện.
-const meal = parseMeal(params.get('gio'), params.get('ngay'), params.get('noi'));
+let meal = parseMeal(params.get('gio'), params.get('ngay'), params.get('noi'));
 
 function parseMeal(gio, ngay, noi) {
   const t = /^(\d{1,2})[:h](\d{2})/.exec((gio || '').trim());
@@ -375,7 +400,8 @@ function setupScene(manager) {
 // ---------- Khởi động ----------
 const pct = $('#loader-pct');
 
-function boot() {
+async function boot() {
+  await resolveInvite();
   bindText();
   renderChapters();
   renderEvents();
@@ -408,7 +434,7 @@ function showIntro() {
   pct.textContent = '100%';
   const intro = $('#intro');
   intro.hidden = false;
-  gsap.to('#loader', { autoAlpha: 0, duration: 0.6, onComplete: () => $('#loader').remove() });
+  gsap.to('#loader', { autoAlpha: 0, duration: 0.6, onComplete: () => $('#loader')?.remove() });
   gsap.from('.intro-card > *', { y: 20, autoAlpha: 0, duration: 0.8, stagger: 0.1, ease: 'power2.out', delay: 0.2 });
 
   renderSeal($('#open-btn'), config.monogram);

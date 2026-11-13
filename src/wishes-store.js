@@ -2,25 +2,21 @@
 // - Có cấu hình Firebase trong config.js → lưu Firestore, mọi khách thấy realtime.
 // - Chưa có → lưu tạm trên trình duyệt này (localStorage), chỉ để thử giao diện.
 
+import { getDb, hasFirebase } from './firebase.js';
+
 export const LIMITS = { name: 60, message: 500 };
 const COLLECTION = 'wishes';
 const MAX_SHOWN = 100;
 
 export async function createWishesStore(firebaseConfig) {
-  if (firebaseConfig?.projectId && firebaseConfig?.apiKey) return firestoreStore(firebaseConfig);
+  if (hasFirebase(firebaseConfig)) return firestoreStore(firebaseConfig);
   console.info('[Lời chúc] Chưa cấu hình Firebase – đang lưu tạm trên trình duyệt này.');
   return localStore();
 }
 
-async function firestoreStore({ recaptchaSiteKey, ...cfg }) {
-  // Chỉ tải Firebase khi thật sự dùng để trang đầu nhẹ hơn.
-  const { initializeApp } = await import('firebase/app');
-  const { getFirestore, collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } = await import(
-    'firebase/firestore'
-  );
-  const app = initializeApp(cfg);
-  if (recaptchaSiteKey) await enableAppCheck(app, recaptchaSiteKey);
-  const db = getFirestore(app);
+async function firestoreStore(cfg) {
+  const db = await getDb(cfg);
+  const { collection, addDoc, onSnapshot, query, orderBy, limit, serverTimestamp } = await import('firebase/firestore');
   const col = collection(db, COLLECTION);
 
   return {
@@ -47,18 +43,6 @@ async function firestoreStore({ recaptchaSiteKey, ...cfg }) {
       return ref.id;
     },
   };
-}
-
-// App Check: Firebase chỉ nhận yêu cầu từ đúng trang thiệp (xác minh ngầm bằng reCAPTCHA v3),
-// nên người khác lấy cấu hình rồi viết script spam sẽ bị chặn khi đã bật Enforce.
-async function enableAppCheck(app, siteKey) {
-  const { initializeAppCheck, ReCaptchaV3Provider } = await import('firebase/app-check');
-  if (import.meta.env.DEV) {
-    // localhost và IP mạng nội bộ không qua được reCAPTCHA: dùng debug token đã đăng ký trên Firebase Console.
-    // Chưa có token thì SDK in một token mới ra console để bạn đăng ký.
-    self.FIREBASE_APPCHECK_DEBUG_TOKEN = import.meta.env.VITE_APPCHECK_DEBUG_TOKEN || true;
-  }
-  initializeAppCheck(app, { provider: new ReCaptchaV3Provider(siteKey), isTokenAutoRefreshEnabled: true });
 }
 
 function localStore() {
