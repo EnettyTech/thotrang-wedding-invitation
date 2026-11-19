@@ -68,7 +68,7 @@ export const config = {
     },
     {
       title: 'Lễ Thành Hôn',
-      time: '10:10',
+      time: '11:10',
       date: '12/12/2026',
       place: 'Tư gia nhà trai',
       address: 'Xóm 8, Nga Yên, Nga Sơn, Thanh Hóa',
